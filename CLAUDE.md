@@ -1,21 +1,35 @@
 # Claude Code Context Monitor（VS Code 扩展）
 
+> **状态（2026-08-16）**：**v0.2.0 已发布**（Provider 架构 + 健康评分 + Homebrew 双形态）· `main` 与远端同步（HEAD `fcd3135`）· 工作区干净 · 两种安装方式均实测通过 · 下一步：可选上架 VS Code Marketplace
+
 监控 Claude Code 的上下文用量。双形态：本扩展 + 终端 CLI（`../claude-context-cli`）。
 
-## 数据契约（改动即破坏性）
+## 0. 当前状态（2026-08-16）
+
+| 项 | 值 |
+|---|---|
+| 当前版本 | **v0.2.0**（发布完成；Provider 架构 + Context 健康评分 + 17 测试） |
+| 分支 | `main`，与远端同步（HEAD `fcd3135` = formula 类名修复） |
+| 工作区 | 干净 |
+| 发布 | GitHub release `v0.2.0`（vsix 资产）+ tap `harries233/homebrew-context` 同步；`brew install claude-context-monitor` 端到端实测通过 |
+| 安装方式 | 方式一 `code --install-extension claude-code-context-monitor-0.2.0.vsix` ✅ · 方式二 `brew install claude-context-monitor` ✅ |
+| 最近修复 | formula 类名 `ClaudeCodeContextMonitor` → `ClaudeContextMonitor`（否则 `brew install` 报「No available formula」） |
+| 下一步 | 可选：`vsce publish` 上架 VS Code Marketplace（需 Azure DevOps PAT） |
+
+## 1. 数据契约（改动即破坏性）
 
 - 活跃会话：`~/.claude/sessions/*.json`；对话记录：`~/.claude/projects/<hash(cwd)>/<sessionId>.jsonl`
 - `hash(cwd)` = `cwd.replace(/\//g, '-')`
 - context% = 最近一条 assistant 的 `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` ÷ 模型容量
 
-## 架构
+## 2. 架构
 
 - 分层：`models/`（纯数据模型）→ `providers/`（数据源接口+实现）→ `services/`（解析/轮询/评分）→ `ui/` + `webview/`（展示）。
 - `ContextMonitor` 是唯一数据源：轮询 → 组装 `ContextSnapshot` → `onUpdate` 广播。状态栏/树/面板只订阅，不直接互调。
 - 数据读取通过 `ClaudeContextProvider` 接口解耦，当前实现为 `ClaudeCliProvider`（读 `~/.claude`）。
 - 模型容量表在 `src/models/contextConfig.ts`（`MODEL_CONTEXT_WINDOWS`）；优先级：用户配置 > 模型表 > 默认 200K。
 
-## 与 CLI 的同步纪律（最高优先级）
+## 3. 与 CLI 的同步纪律（最高优先级）
 
 CLI（`../claude-context-cli/bin/claude-context`）是扩展**解析后端**的内联拷贝。改 UI/扩展专属文件**不用**动 CLI：
 `src/extension.ts` / `src/ui/**` / `src/webview/**` / `media/**` / `src/services/summary.ts` / `src/services/healthScore.ts` / `src/providers/**`（Provider 抽象与探测为扩展专属）。
@@ -30,19 +44,20 @@ CLI（`../claude-context-cli/bin/claude-context`）是扩展**解析后端**的�
 
 > 已知差异（扩展领先，CLI 未同步）：`sessionParser` 新增 `fileReadCount`/`duplicateReadCount` 供健康评分使用，CLI 不输出这两个字段，不影响 context% 一致性。改后端后，用真实 `~/.claude` 跑 `node ../claude-context-cli/bin/claude-context` 冒烟。
 
-## 命令
+## 4. 命令
 
 `npm run compile`（tsc→dist）· `npm run watch` · F5 调试 · `npm test`（node:test 单测+集成）· `npm run package`（vsce→.vsix）· `npm run release`（发版脚本）
 
 无 lint：`npm run lint` 是空 stub，别依赖它。
 
-## 陷阱
+## 5. 陷阱
 
 - `resolveMaxContextTokens` 必须在 JSONL parse **之后**调用；parse 前 `meta.model` 未定义，deepseek-v4-pro 会误判成 200K（实际 1M）。
 - 大文件 token = 字符数 ÷ 4，估算值，非精确。
 - 第三方网关封顶常小于官方容量，1M 表项实际可能只有 128K。
-- `claude` 未必在 PATH 上（通过 VS Code 扩展启动的 Claude Code 尤其如此）；环境探测以 `~/.claude` 数据目录 + 活跃会话文件为主信号，`claude` 命令只用于「打开新 Session」动作。
+- `claude`/`code` 未必在 PATH 上（通过 VS Code 扩展启动的 Claude Code 尤其如此）；环境探测以 `~/.claude` 数据目录 + 活跃会话文件为主信号，`claude` 命令只用于「打开新 Session」动作。formula 的 `code_cli` 按标准 app bundle 路径兜底，不依赖 PATH。
+- Homebrew formula 类名必须匹配文件名：`claude-context-monitor.rb` ↔ `ClaudeContextMonitor`。`release.sh` 只替换 version/sha256/url、不碰类名；改类名需同时改源仓库与 tap 两处 Formula 并各自 push。
 
-## 规范
+## 6. 规范
 
 TypeScript strict；中文 JSDoc；类 PascalCase、函数/变量 camelCase、常量 UPPER_SNAKE。
