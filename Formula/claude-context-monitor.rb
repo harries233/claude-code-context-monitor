@@ -7,7 +7,7 @@
 #        brew install claude-context-monitor
 #
 # 更新：跑 `bash scripts/release.sh <version>`，会自动重算 sha256 并替换下方字段。
-class ClaudeCodeContextMonitor < Formula
+class ClaudeContextMonitor < Formula
   desc "VS Code extension to monitor Claude Code context usage"
   homepage "https://github.com/harries233/claude-code-context-monitor"
   url "https://github.com/harries233/claude-code-context-monitor/releases/download/v0.2.0/claude-code-context-monitor-0.2.0.vsix"
