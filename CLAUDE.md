@@ -1,6 +1,6 @@
 # Claude Code Context Monitor（VS Code 扩展）
 
-> **状态（2026-08-16）**：三个 Bug 修复 + **自动更新功能**（Dashboard 内「更新」按钮，检测 GitHub 最新 release 并一键安装）· 27 测试全绿 · 待发版 **v0.2.1**（连 CLI v0.1.1）· 下一步：可选上架 VS Code Marketplace
+> **状态（2026-08-16）**：三个 Bug 修复 + **自动更新功能**（Dashboard 内「更新」按钮，检测 GitHub 最新 release 并一键安装）· 27 测试全绿 · **v0.2.1 已发布**（连 CLI v0.1.1，tap `harries233/context` 已同步，`brew upgrade` 端到端验证通过）· 下一步：可选上架 VS Code Marketplace
 
 监控 Claude Code 的上下文用量。双形态：本扩展 + 终端 CLI（`../claude-context-cli`）。
 
@@ -8,13 +8,13 @@
 
 | 项 | 值 |
 |---|---|
-| 当前版本 | **v0.2.0**（已发布）· 三个 Bug 修复 + 自动更新已完成，待发版 **v0.2.1** |
-| 分支 | `main`，本次改动已提交（未推送，领先 `origin`） |
+| 当前版本 | **v0.2.1**（已发布：三个 Bug 修复 + 自动更新）· 同源 CLI **v0.1.1** |
+| 分支 | `main`，已推送并与远端同步 |
 | 工作区 | 干净（`dist/` 已 gitignore） |
-| 发布 | 最近一次 `v0.2.0`（vsix 资产 + tap `harries233/context` 同步）；本次未发版 |
-| 安装方式 | 方式一 `code --install-extension claude-code-context-monitor-0.2.0.vsix` ✅ · 方式二 `brew install claude-context-monitor` ✅ |
+| 发布 | **v0.2.1**（vsix 资产 + tap `harries233/context` 同步 ✅）+ **CLI v0.1.1**（tag + tap 同步 ✅），`brew upgrade claude-context-monitor claude-context` 端到端验证通过 |
+| 安装方式 | 方式一 `code --install-extension claude-code-context-monitor-0.2.1.vsix` ✅ · 方式二 `brew install claude-context-monitor` ✅ |
 | 最近修复/新增 | ① 侧边栏点击 Session 时详情面板跟随切换对应会话（`openDashboard` 携带 sessionId + Dashboard 选中态）；② 多 Claude 窗口/终端时底部 Claude Context 按「最近活动」判定当前会话（`resolveCurrentSession` 改按 `lastActivityAt`/`lastModifiedAt`），并在窗口获焦/切终端时立即刷新；③ 悬停提示改为 diff 式树更新（稳定实例 + 内容变化才刷新），轮询不再重建整棵树、悬停内容保持到鼠标离开；④ **自动更新**：Dashboard 打开时查 GitHub Releases API（`src/services/updateChecker.ts`），发现新版本在顶栏显示「更新」按钮 + 系统通知，点击后下载 vsix（`src/services/updater.ts`）经 `workbench.extensions.installExtension` 安装并提示重载 |
-| 下一步 | 发版 **v0.2.1**（`bash scripts/release.sh 0.2.1`）+ CLI **v0.1.1**（含 `resolveCurrentSession` 同步）+ 同步 tap；可选 `vsce publish` 上架 Marketplace（需 Azure DevOps PAT） |
+| 下一步 | 可选 `vsce publish` 上架 VS Code Marketplace（需 Azure DevOps PAT）；后续版本可从社区反馈驱动 |
 
 ## 1. 数据契约（改动即破坏性）
 
