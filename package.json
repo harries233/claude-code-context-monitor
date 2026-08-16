@@ -1,0 +1,128 @@
+{
+  "name": "claude-code-context-monitor",
+  "displayName": "Claude Code Context Monitor",
+  "description": "实时监控 Claude Code 的上下文使用情况，并帮助管理 AI Coding Session",
+  "version": "0.1.0",
+  "publisher": "harries233",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harries233/claude-code-context-monitor.git"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "context",
+    "token",
+    "ai",
+    "session",
+    "monitor"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claudeContextMonitor",
+          "title": "Claude Context Monitor",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudeContextMonitor": [
+        {
+          "id": "claudeContextMonitor.sessions",
+          "name": "Sessions",
+          "contextualTitle": "Claude Code Sessions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudeContextMonitor.openDashboard",
+        "title": "Claude Context Monitor: 打开 Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "claudeContextMonitor.refresh",
+        "title": "Claude Context Monitor: 刷新数据",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "claudeContextMonitor.compactHint",
+        "title": "Claude Context Monitor: 复制 /compact 命令",
+        "icon": "$(copy)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudeContextMonitor.openDashboard",
+          "when": "view == claudeContextMonitor.sessions",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claudeContextMonitor.refresh",
+          "when": "view == claudeContextMonitor.sessions",
+          "group": "navigation@2"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Code Context Monitor",
+      "properties": {
+        "claudeContextMonitor.maxContextTokens": {
+          "type": "number",
+          "default": 200000,
+          "minimum": 0,
+          "description": "模型的最大 context 容量（tokens）。设为 0 表示根据当前模型自动检测；未知模型回退到 200000。"
+        },
+        "claudeContextMonitor.refreshInterval": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "数据轮询间隔（秒）。"
+        },
+        "claudeContextMonitor.claudeDataDir": {
+          "type": "string",
+          "default": "",
+          "description": "Claude Code 数据目录（留空默认使用 ~/.claude）。"
+        },
+        "claudeContextMonitor.warningThresholds": {
+          "type": "object",
+          "default": {
+            "warning": 70,
+            "critical": 85,
+            "danger": 95
+          },
+          "description": "告警阈值（百分比）。warning=黄色，critical=红色，danger=强烈建议新 Session。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "lint": "echo \"no linter configured\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^2.27.0",
+    "typescript": "^5.4.0"
+  }
+}

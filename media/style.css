@@ -1,0 +1,321 @@
+/* Claude Code Context Monitor — Dashboard 样式
+   使用 VS Code 主题变量，自动适配浅色/深色主题。 */
+
+:root {
+  --ccm-accent: #7c5cff;
+  --ccm-radius: 10px;
+  --ccm-gap: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  line-height: 1.5;
+}
+
+#app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ccm-gap);
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  font-size: 26px;
+  color: var(--ccm-accent);
+}
+
+.brand-text h1 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--vscode-button-border, transparent);
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+.btn:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* ---------- 仪表盘卡片 ---------- */
+.gauge-card {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: var(--ccm-radius);
+  background: var(--vscode-editor-background);
+  flex-wrap: wrap;
+}
+
+.gauge {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.gauge-bg {
+  fill: none;
+  stroke: var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.2));
+  stroke-width: 10;
+}
+
+.gauge-fg {
+  fill: none;
+  stroke: #3fb950;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 326.73;
+  stroke-dashoffset: 326.73;
+  transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+}
+
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: none;
+}
+
+.gauge-value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.gauge-label {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.gauge-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  min-width: 200px;
+}
+
+.gauge-meta .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.gauge-meta .k {
+  color: var(--vscode-descriptionForeground);
+}
+.gauge-meta .v {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 告警横幅 ---------- */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--ccm-radius);
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+.banner.hidden {
+  display: none;
+}
+.banner-icon {
+  font-size: 16px;
+}
+
+/* ---------- 统计网格 ---------- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--ccm-gap);
+}
+
+.stat {
+  padding: 14px 16px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: var(--ccm-radius);
+  background: var(--vscode-editor-background);
+}
+.stat .stat-label {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.stat .stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 通用卡片 ---------- */
+.card {
+  padding: 18px 20px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: var(--ccm-radius);
+  background: var(--vscode-editor-background);
+}
+.card h2 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--vscode-foreground);
+}
+
+/* ---------- Session 列表 ---------- */
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 8px;
+}
+.session-item.current {
+  border-color: var(--ccm-accent);
+}
+.session-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.session-dot.active {
+  background: #3fb950;
+}
+.session-dot.ended {
+  background: var(--vscode-descriptionForeground);
+  opacity: 0.5;
+}
+.session-main {
+  flex: 1;
+  min-width: 0;
+}
+.session-title {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-sub {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+.session-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+.session-pct {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.session-tokens {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* ---------- 建议 ---------- */
+.suggestions {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.suggestions li {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--vscode-textBlockQuote-background);
+  font-size: 13px;
+}
+
+/* ---------- 大文件 ---------- */
+.large-files {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.large-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--vscode-textBlockQuote-background);
+  font-size: 12px;
+}
+.large-file .path {
+  font-family: var(--vscode-editor-font-family);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.large-file .tokens {
+  color: var(--vscode-descriptionForeground);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  padding: 8px 0;
+}
