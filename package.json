@@ -1,20 +1,25 @@
 {
   "name": "claude-code-context-monitor",
-  "displayName": "Claude Code Context Monitor",
-  "description": "实时监控 Claude Code 的上下文使用情况，并帮助管理 AI Coding Session",
-  "version": "0.1.0",
+  "displayName": "Claude Context Monitor",
+  "description": "实时监控 Claude Code 的上下文使用情况，提供健康评分、告警与 Session 管理",
+  "version": "0.2.0",
   "publisher": "harries233",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/harries233/claude-code-context-monitor.git"
   },
+  "bugs": {
+    "url": "https://github.com/harries233/claude-code-context-monitor/issues"
+  },
+  "homepage": "https://github.com/harries233/claude-code-context-monitor#readme",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Other",
-    "Visualization"
+    "Visualization",
+    "Linters"
   ],
   "keywords": [
     "claude",
@@ -23,7 +28,8 @@
     "token",
     "ai",
     "session",
-    "monitor"
+    "monitor",
+    "anthropic"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -63,6 +69,16 @@
         "command": "claudeContextMonitor.compactHint",
         "title": "Claude Context Monitor: 复制 /compact 命令",
         "icon": "$(copy)"
+      },
+      {
+        "command": "claudeContextMonitor.newSession",
+        "title": "Claude Context Monitor: 打开新 Session",
+        "icon": "$(new-file)"
+      },
+      {
+        "command": "claudeContextMonitor.generateSummary",
+        "title": "Claude Context Monitor: 生成 Session 摘要",
+        "icon": "$(note)"
       }
     ],
     "menus": {
@@ -76,6 +92,11 @@
           "command": "claudeContextMonitor.refresh",
           "when": "view == claudeContextMonitor.sessions",
           "group": "navigation@2"
+        },
+        {
+          "command": "claudeContextMonitor.generateSummary",
+          "when": "view == claudeContextMonitor.sessions",
+          "group": "navigation@3"
         }
       ]
     },
@@ -108,6 +129,11 @@
             "danger": 95
           },
           "description": "告警阈值（百分比）。warning=黄色，critical=红色，danger=强烈建议新 Session。"
+        },
+        "claudeContextMonitor.showHealthScore": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否在 Dashboard 与状态栏展示 Context 健康评分。"
         }
       }
     }
@@ -115,9 +141,12 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
+    "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
-    "lint": "echo \"no linter configured\""
+    "test": "tsc -p test/tsconfig.json && node --test \"dist-test/test/*.test.js\"",
+    "lint": "echo \"no linter configured\"",
+    "release": "bash scripts/release.sh"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

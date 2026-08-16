@@ -1,4 +1,4 @@
-import { LargeFile, SessionMeta, SessionStats } from './types';
+import { LargeFile, SessionMeta, SessionStats } from '../models/types';
 
 /**
  * 解析 Claude Code 的 JSONL 会话记录，并聚合成统计。
@@ -18,6 +18,12 @@ export interface SessionAccumulator {
   latestContextTokens: number;
   latestInputTokens: number;
   messageCount: number;
+  /** 本会话读取/打开文件的次数。 */
+  fileReadCount: number;
+  /** 重复读取同一文件的次数。 */
+  duplicateReadCount: number;
+  /** 已读取过的文件路径（去重）。 */
+  readFilePaths: Set<string>;
   /** 文件路径 → 估算 tokens。 */
   largeFiles: Map<string, number>;
   /** tool_use id → 文件路径，用于把 tool_result 归因到具体文件。 */
@@ -33,6 +39,9 @@ export function createAccumulator(meta: SessionMeta): SessionAccumulator {
     latestContextTokens: 0,
     latestInputTokens: 0,
     messageCount: 0,
+    fileReadCount: 0,
+    duplicateReadCount: 0,
+    readFilePaths: new Set(),
     largeFiles: new Map(),
     toolFileById: new Map(),
     lastActivityAt: 0,
@@ -103,7 +112,7 @@ function applyEntry(acc: SessionAccumulator, entry: Record<string, unknown>): vo
     acc.latestContextTokens = input + cacheCreation + cacheRead;
   }
 
-  // 扫描内容块，找出占用 token 较大的文件
+  // 扫描内容块，找出占用 token 较大的文件，并统计文件读取次数
   const content = message.content;
   if (Array.isArray(content)) {
     for (const block of content) {
@@ -117,6 +126,16 @@ function applyEntry(acc: SessionAccumulator, entry: Record<string, unknown>): vo
         const fp = input.file_path || input.path || input.uri;
         if (b.id && fp && /read|open|edit|write|view/i.test(name)) {
           acc.toolFileById.set(String(b.id), String(fp));
+        }
+        // 统计「读取/打开」类工具的文件读取次数与重复读取
+        if (fp && /^(read|open|view)/i.test(name)) {
+          acc.fileReadCount++;
+          const key = String(fp);
+          if (acc.readFilePaths.has(key)) {
+            acc.duplicateReadCount++;
+          } else {
+            acc.readFilePaths.add(key);
+          }
         }
       } else if (b.type === 'tool_result') {
         const est = estimateTokens(b.content);
@@ -153,6 +172,8 @@ export function finalizeStats(
     totalInputTokens: acc.totalInputTokens,
     totalOutputTokens: acc.totalOutputTokens,
     messageCount: acc.messageCount,
+    fileReadCount: acc.fileReadCount,
+    duplicateReadCount: acc.duplicateReadCount,
     elapsedMs: Math.max(0, now - acc.meta.startedAt),
     largeFiles,
     lastActivityAt: acc.lastActivityAt,

@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import { ContextMonitor } from './contextMonitor';
+import { ContextMonitor } from '../services/contextMonitor';
+import { generateSessionSummary } from '../services/summary';
+import { ContextSnapshot } from '../models/types';
 import { getDashboardHtml } from './html';
-import { ContextSnapshot } from './types';
 
 /**
  * 详情面板（WebView）。单例，重复调用复用已有面板。
@@ -48,7 +49,7 @@ export class DashboardPanel {
     this.disposables.push(panel.onDidDispose(() => this.dispose()));
   }
 
-  private onMessage(msg: { type?: string }): void {
+  private onMessage(msg: { type?: string; text?: string }): void {
     switch (msg?.type) {
       case 'ready': {
         // webview 首次加载完成后请求一次快照，避免初始推送丢失
@@ -59,15 +60,28 @@ export class DashboardPanel {
         break;
       }
       case 'refresh':
-        vscode.commands.executeCommand('claudeContextMonitor.refresh');
+        void vscode.commands.executeCommand('claudeContextMonitor.refresh');
         break;
       case 'copyCompact':
         void vscode.env.clipboard.writeText('/compact').then(() => {
-          vscode.window.showInformationMessage('已复制 /compact 命令到剪贴板');
+          void vscode.window.showInformationMessage('已复制 /compact 命令到剪贴板');
         });
         break;
-      case 'openSession':
-        // 预留：未来按 sessionId 打开详情
+      case 'generateSummary': {
+        const snap = this.monitor.getSnapshot();
+        const text = snap?.current
+          ? generateSessionSummary(snap.current, snap.health)
+          : '当前没有活动会话，无法生成摘要。';
+        this.post('summary', { text });
+        break;
+      }
+      case 'copySummary':
+        void vscode.env.clipboard.writeText(msg.text ?? '').then(() => {
+          void vscode.window.showInformationMessage('已复制摘要到剪贴板');
+        });
+        break;
+      case 'openNewSession':
+        void vscode.commands.executeCommand('claudeContextMonitor.newSession');
         break;
       default:
         break;

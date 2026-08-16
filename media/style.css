@@ -59,6 +59,12 @@ body {
   color: var(--vscode-descriptionForeground);
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .btn {
   appearance: none;
   border: 1px solid var(--vscode-button-border, transparent);
@@ -72,6 +78,28 @@ body {
 }
 .btn:hover {
   background: var(--vscode-button-secondaryHoverBackground);
+}
+.btn.primary {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: transparent;
+}
+.btn.primary:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+/* ---------- 健康徽章 ---------- */
+.health-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  border: 1px solid var(--vscode-panel-border);
 }
 
 /* ---------- 仪表盘卡片 ---------- */
@@ -173,10 +201,99 @@ body {
   font-size: 16px;
 }
 
+/* ---------- 健康卡片 ---------- */
+.health-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.health-grade {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.health-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.health-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.health-score {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.health-factors {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.health-factors li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.health-factors .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.health-factors .dot.good { background: #3fb950; }
+.health-factors .dot.ok { background: #d29922; }
+.health-factors .dot.bad { background: #ff3b30; }
+
+.health-factors .fname {
+  color: var(--vscode-descriptionForeground);
+  min-width: 84px;
+}
+
+/* ---------- Context 进度条 ---------- */
+.context-bar {
+  height: 22px;
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.18));
+  overflow: hidden;
+}
+
+.context-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  background: #3fb950;
+  transition: width 0.5s ease, background 0.3s ease;
+}
+
+.context-bar-text {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- 统计网格 ---------- */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: var(--ccm-gap);
 }
 
@@ -199,6 +316,13 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- 操作按钮 ---------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 /* ---------- 通用卡片 ---------- */
 .card {
   padding: 18px 20px;
@@ -211,6 +335,12 @@ body {
   font-weight: 600;
   margin-bottom: 12px;
   color: var(--vscode-foreground);
+}
+
+.hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
 }
 
 /* ---------- Session 列表 ---------- */
@@ -318,4 +448,66 @@ body {
   color: var(--vscode-descriptionForeground);
   font-size: 12px;
   padding: 8px 0;
+}
+
+/* ---------- 摘要弹窗 ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+.modal.hidden {
+  display: none;
+}
+.modal-box {
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: var(--ccm-radius);
+  overflow: hidden;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+.modal-close {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--vscode-descriptionForeground);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover {
+  color: var(--vscode-foreground);
+}
+.summary-text {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  font-family: var(--vscode-editor-font-family);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--vscode-panel-border);
 }

@@ -1,21 +1,25 @@
-import * as vscode from 'vscode';
+/**
+ * 与模型 context 容量、告警阈值相关的纯配置（不依赖 vscode，可单元测试）。
+ */
 
+/** 告警阈值（百分比）。 */
 export interface Thresholds {
   warning: number;
   critical: number;
   danger: number;
 }
 
-export interface MonitorConfig {
-  /** 0 表示按模型自动检测。 */
-  maxContextTokens: number;
-  refreshInterval: number;
-  claudeDataDir: string;
-  thresholds: Thresholds;
-}
+export const DEFAULT_THRESHOLDS: Thresholds = {
+  warning: 70,
+  critical: 85,
+  danger: 95,
+};
+
+export const DEFAULT_MAX_CONTEXT_TOKENS = 200000;
+export const DEFAULT_REFRESH_INTERVAL = 5;
 
 /** 已知模型 → 最大 context 窗口（tokens）。 */
-const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
+export const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
   // Anthropic Claude 系列（200K）
   'claude-opus-4': 200000,
   'claude-opus-4-1': 200000,
@@ -41,27 +45,6 @@ const MODEL_CONTEXT_WINDOWS: Record<string, number> = {
   'deepseek-reasoner': 128000,
   'deepseek-r1': 128000,
 };
-
-export const DEFAULT_MAX_CONTEXT_TOKENS = 200000;
-export const DEFAULT_REFRESH_INTERVAL = 5;
-
-export function getConfig(): MonitorConfig {
-  const cfg = vscode.workspace.getConfiguration('claudeContextMonitor');
-  const raw = cfg.get<{ warning?: number; critical?: number; danger?: number }>(
-    'warningThresholds',
-    {}
-  );
-  return {
-    maxContextTokens: cfg.get<number>('maxContextTokens', DEFAULT_MAX_CONTEXT_TOKENS),
-    refreshInterval: cfg.get<number>('refreshInterval', DEFAULT_REFRESH_INTERVAL),
-    claudeDataDir: cfg.get<string>('claudeDataDir', ''),
-    thresholds: {
-      warning: raw.warning ?? 70,
-      critical: raw.critical ?? 85,
-      danger: raw.danger ?? 95,
-    },
-  };
-}
 
 /**
  * 解析模型的最大 context 容量：

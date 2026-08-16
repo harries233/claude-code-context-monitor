@@ -1,7 +1,14 @@
 .vscode/**
 src/**
+test/**
+dist-test/**
+scripts/**
+Formula/**
 node_modules/**
 .gitignore
+.git/**
+CLAUDE.md
 tsconfig.json
+test/tsconfig.json
 **/*.map
 **/*.ts

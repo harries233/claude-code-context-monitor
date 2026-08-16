@@ -1,3 +1,6 @@
+import { HealthReport } from './health';
+import { ProviderDetection } from './provider';
+
 /**
  * 共享类型定义。
  */
@@ -47,6 +50,10 @@ export interface SessionStats {
   totalOutputTokens: number;
   /** user + assistant 消息总数。 */
   messageCount: number;
+  /** 本会话读取/打开过的文件次数（tool_use 计数）。 */
+  fileReadCount: number;
+  /** 重复读取同一文件的次数（用于重复内容检测）。 */
+  duplicateReadCount: number;
   /** 会话已运行时长（毫秒）。 */
   elapsedMs: number;
   /** 占用 token 较多的文件（按估算 token 降序）。 */
@@ -65,6 +72,10 @@ export interface ContextSnapshot {
   sessions: SessionStats[];
   warningLevel: WarningLevel;
   suggestionList: string[];
+  /** 当前会话的健康评分报告，若没有活动会话则为 null。 */
+  health: HealthReport | null;
+  /** 环境探测结果（provider 是否可用）。 */
+  detection: ProviderDetection | null;
   /** 快照生成时间（毫秒）。 */
   updatedAt: number;
 }

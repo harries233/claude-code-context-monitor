@@ -1,5 +1,5 @@
-import { Thresholds } from './config';
-import { WarningLevel } from './types';
+import { Thresholds } from '../models/contextConfig';
+import { WarningLevel } from '../models/types';
 
 export interface WarningInfo {
   level: WarningLevel;

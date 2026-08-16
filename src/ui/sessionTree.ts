@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { ContextMonitor } from './contextMonitor';
-import { formatDuration, formatTime, formatTokens } from './format';
-import { ContextSnapshot, SessionStats } from './types';
+import { ContextSnapshot, SessionStats } from '../models/types';
+import { ContextMonitor } from '../services/contextMonitor';
+import { formatDuration, formatTime, formatTokens } from '../services/format';
 
 /** 侧边栏里的一条 Session。 */
 class SessionItem extends vscode.TreeItem {
@@ -20,10 +20,12 @@ class SessionItem extends vscode.TreeItem {
 
     const state = stats.meta.active ? '● 运行中' : '○ 已结束';
     const badge = isCurrent ? ' · ★ 当前' : '';
+    const lastActive = stats.lastActivityAt ? `最近活动: ${formatTime(stats.lastActivityAt)}` : '';
     this.tooltip = [
       `${stats.meta.name || stats.meta.sessionId}${badge}`,
       state,
       `创建时间: ${formatTime(stats.meta.startedAt)}`,
+      `最近活动: ${stats.lastActivityAt ? formatTime(stats.lastActivityAt) : '—'}`,
       `Context:   ${stats.contextPercent}% (${formatTokens(stats.contextTokens)} / ${formatTokens(stats.maxContextTokens)})`,
       `消息数:   ${stats.messageCount}`,
       `运行时长: ${formatDuration(stats.elapsedMs)}`,
@@ -40,8 +42,8 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<SessionItem>
 
   readonly onDidChangeTreeData = this.emitter.event;
 
-  constructor(private readonly monitor: ContextMonitor) {
-    this.monitor.onUpdate((s) => this.applySnapshot(s));
+  constructor(monitor: ContextMonitor) {
+    monitor.onUpdate((s) => this.applySnapshot(s));
   }
 
   private applySnapshot(s: ContextSnapshot): void {

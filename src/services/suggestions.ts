@@ -1,6 +1,6 @@
-import { Thresholds } from './config';
+import { Thresholds } from '../models/contextConfig';
+import { SessionStats } from '../models/types';
 import { formatTokens } from './format';
-import { SessionStats } from './types';
 
 /**
  * 基于统计数据生成规则化的优化建议（MVP：不做 AI 分析）。
@@ -25,7 +25,7 @@ export function generateSuggestions(stats: SessionStats, t: Thresholds): string[
 
   if (stats.largeFiles.length > 0) {
     const top = stats.largeFiles[0];
-    out.push(`📄 占用 token 最多的文件：${top.path}（约 ${formatTokens(top.estimatedTokens)} tokens）。`);
+    out.push(`📄 占用 token 最多的文件：${top.path}（约 ${formatTokens(top.estimatedTokens)} tokens），可加入 ignore 规则。`);
   }
 
   if (out.length === 0) {

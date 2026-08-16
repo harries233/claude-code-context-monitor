@@ -1,27 +1,23 @@
-# Claude Code Context Monitor
+# Claude Context Monitor
 
-一个 VS Code 插件，实时监控 **Claude Code** 的上下文（Context）使用情况，帮助开发者管理 AI Coding Session。
+一个生产级 VS Code 插件，实时监控 **Claude Code** 的上下文（Context）使用情况，提供健康评分、分级告警与 Session 管理，帮助开发者把 AI Coding Session 维持在健康状态。
 
-> MVP 版本：实时读取本地 Claude Code 数据并可视化，不包含复杂 AI 分析。
+> 无需打开源码、无需 F5 调试宿主：`brew install claude-context-monitor` 后打开 VS Code 即可使用。
 
 ## ✨ 功能
 
-1. **Status Bar Context Monitor** — 底部状态栏显示 `Claude Context: XX%`，颜色随使用率变化，点击打开详情面板。
-2. **Context Dashboard（WebView）** — 可视化展示：
-   - Context 使用百分比（环形仪表盘）
-   - 当前 token 数量 / 最大 context 容量
-   - 输入 / 输出 token
-   - Session 运行时长、消息数量
-3. **Context Warning System** — 按使用率分级告警：
-   - ≥ 70% 黄色提示
-   - ≥ 85% 红色提示
-   - ≥ 95% 强烈建议开启新 Session
-4. **Session Manager（侧边栏）** — 列出当前工作区所有 Session：名称、创建时间、Context 使用率、运行状态。
-5. **Context Optimization Suggestions** — 规则化建议（建议 /compact、新建 Session、找出占用 token 较多的大文件等）。
+1. **自动激活** — 通过 `onStartupFinished` 启动后自动初始化监控、创建状态栏、加载 Dashboard、开启数据监听。
+2. **环境自动发现** — 检测 Claude Code 是否安装、当前工作区与当前 Session；未检测到则显示 `Claude Code not detected`。
+3. **Status Bar Context Monitor** — 底部状态栏显示 `Claude Context: XX%`，颜色随使用率变化，点击打开详情面板。
+4. **Context Dashboard（WebView）** — 环形仪表盘 + 进度条 + Token 明细（Input / Output / Total）+ Session 时长与消息数。
+5. **Context 健康评分系统** — A/B/C/D 四级评分，综合 Context 百分比、消息数量、文件读取数量、大文件数量、重复内容五个维度。
+6. **智能提醒** — 70% 黄色 / 85% 红色 / 95% 强提醒，并提供 `Generate Summary`、`Open New Session`、`复制 /compact` 操作。
+7. **Session 管理** — 侧边栏与 Dashboard 列出 Session 名称、创建时间、Context 使用率、最近活动、运行状态。
+8. **Token 消耗分析** — `Largest Context Consumers` 列出占用 token 最多的文件，并给出加入 ignore 规则的建议。
 
 ## 🔌 数据来源
 
-插件直接读取 Claude Code 的本地数据目录（默认 `~/.claude`）：
+插件读取 Claude Code 的本地数据目录（默认 `~/.claude`）：
 
 | 数据 | 位置 |
 | --- | --- |
@@ -34,38 +30,37 @@
 
 **Context 使用率** = 最近一次 assistant 消息的 `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` 除以模型最大 context 容量。
 
-## 🚀 运行 / 调试
+## 🚀 安装
 
-### 1. 安装依赖
+### 方式一：Homebrew（推荐）
 
 ```bash
+brew tap harries233/homebrew-context
+brew install claude-context-monitor
+```
+
+安装脚本会自动检测 `code` 命令并执行 `code --install-extension`。
+
+### 方式二：手动安装 VSIX
+
+```bash
+git clone https://github.com/harries233/claude-code-context-monitor.git
 cd claude-code-context-monitor
 npm install
+npm run package       # 生成 claude-code-context-monitor-0.2.0.vsix
+code --install-extension claude-code-context-monitor-0.2.0.vsix
 ```
 
-### 2. 编译
+## 🧪 本地开发
 
 ```bash
-npm run compile        # 一次性编译到 dist/
-npm run watch          # 监听模式（开发时推荐）
+npm install
+npm run compile     # 一次性编译到 dist/
+npm run watch       # 监听模式（开发推荐）
+npm test            # 运行单元 + 集成测试
 ```
 
-### 3. 在 VS Code 中调试（F5）
-
-1. 用 VS Code 打开本项目目录。
-2. 按 `F5`（或「运行和调试」→「Run Extension」）。
-3. 会启动一个新的「扩展开发宿主」（Extension Development Host）窗口，插件已在其中激活。
-4. 在该宿主窗口底部状态栏即可看到 `Claude Context: XX%`；点击它，或在命令面板运行 `Claude Context Monitor: 打开 Dashboard` 查看详情面板。
-
-> 调试配置见 `.vscode/launch.json`，它会先执行 `npm run watch`（`preLaunchTask`）保证 `dist/` 最新。
-
-### 4. 打包成 .vsix
-
-```bash
-npm run package
-```
-
-然后在 VS Code 中：`Extensions` → `...` → `Install from VSIX...` 选择生成的 `*.vsix`。
+调试：用 VS Code 打开本项目，按 `F5` 启动扩展开发宿主。
 
 ## ⚙️ 配置
 
@@ -77,49 +72,57 @@ npm run package
 | `refreshInterval` | `5` | 轮询间隔（秒）。 |
 | `claudeDataDir` | `""` | Claude Code 数据目录，留空默认 `~/.claude`。 |
 | `warningThresholds` | `{warning:70, critical:85, danger:95}` | 告警阈值（百分比）。 |
+| `showHealthScore` | `true` | 是否展示 Context 健康评分。 |
 
-> ⚠️ 如果你的 Claude Code 实际使用的模型 context 容量不是 200k（例如某些第三方模型），请把 `maxContextTokens` 设为该模型的实际容量，否则百分比会失真。
+> ⚠️ 如果你的 Claude Code 实际使用的模型 context 容量不是 200k（例如某些第三方网关封顶 128K），请把 `maxContextTokens` 设为该模型的实际容量，否则百分比会失真。
 
-## 📁 项目结构
+## 🏗️ 项目结构
 
 ```
 claude-code-context-monitor/
 ├── package.json              # 插件清单、命令、视图、配置
 ├── tsconfig.json
-├── .vscode/
-│   ├── launch.json           # F5 调试配置
-│   └── tasks.json            # npm watch 任务
-├── media/
-│   ├── icon.svg              # 活动栏图标
-│   ├── style.css             # Dashboard 样式
-│   └── main.js               # Dashboard 前端逻辑
+├── media/                    # Dashboard 前端（icon/style/main.js）
+├── Formula/                  # Homebrew formula
+├── scripts/                  # 安装 / 发布脚本
+├── test/                     # 单元 + 集成测试
 └── src/
     ├── extension.ts          # 入口：激活、注册命令/视图
-    ├── types.ts              # 共享类型
-    ├── config.ts             # 配置读取、模型 context 容量表
-    ├── format.ts             # 数字/时长格式化
-    ├── pathUtil.ts           # 数据目录 / hash(cwd) 路径工具
-    ├── sessionParser.ts      # JSONL 解析、增量聚合
-    ├── dataProvider.ts       # 读取本地数据、增量更新
-    ├── contextMonitor.ts     # 轮询调度、快照组装、当前 Session 判定
-    ├── warningSystem.ts      # 告警等级判定
-    ├── suggestions.ts        # 优化建议生成
-    ├── statusBar.ts          # 底部状态栏
-    ├── sessionTree.ts        # 侧边栏 Session 列表
-    ├── dashboardPanel.ts     # WebView 面板
-    └── html.ts               # WebView HTML 模板
+    ├── models/               # 纯数据模型（types/health/contextConfig/provider）
+    ├── providers/            # Provider 接口 + CLI 实现 + 工厂
+    │   ├── ClaudeContextProvider.ts
+    │   ├── ClaudeCliProvider.ts
+    │   └── index.ts
+    ├── services/             # 核心逻辑（解析/轮询/健康评分/告警/建议/摘要）
+    │   ├── sessionParser.ts
+    │   ├── contextMonitor.ts
+    │   ├── healthScore.ts
+    │   ├── warningSystem.ts
+    │   ├── suggestions.ts
+    │   ├── summary.ts
+    │   ├── currentSession.ts
+    │   ├── config.ts
+    │   └── format.ts
+    ├── ui/                   # Status Bar / Session Tree
+    ├── webview/              # Dashboard WebView 面板
+    └── utils/                # pathUtil / env 探测
 ```
 
 ## 🧭 实现要点
 
+- **Provider 架构**：`ContextMonitor` 只依赖 `ClaudeContextProvider` 接口，不绑定具体实现，新增 Provider 无需改动 UI 层。
 - **增量解析**：对每个 JSONL 记录已消费的字节偏移，每次轮询只读取新增字节，避免重读大文件；文件被截断/轮转时自动重置。
 - **单例面板**：Dashboard 复用同一个 WebView，避免重复创建。
 - **事件驱动**：`ContextMonitor` 是唯一数据源，通过 `onUpdate` 事件广播快照给状态栏、侧边栏、面板。
 - **主题适配**：Dashboard 使用 VS Code 主题变量（`--vscode-*`），自动适配浅色/深色主题。
 
-## 🗺️ 后续规划（非 MVP）
+## 🗺️ 后续规划
 
-- 结合 `/compact` 前后 token 变化的历史曲线
-- 跨工作区的全局 Session 聚合
-- 更精确的 token 估算（tiktoken 类分词）
-- 点击 Session 项跳转到对应工作区
+- Provider 2：Claude VS Code Extension；Provider 3：其他 AI Coding Agent。
+- 结合 `/compact` 前后 token 变化的历史曲线。
+- 跨工作区的全局 Session 聚合。
+- 更精确的 token 估算（tiktoken 类分词）。
+
+## 📄 许可证
+
+[MIT](LICENSE)
