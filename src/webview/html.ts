@@ -28,6 +28,7 @@ export function getDashboardHtml(webview: vscode.Webview, extensionUri: vscode.U
         </div>
       </div>
       <div class="topbar-actions">
+        <button id="backCurrentBtn" class="btn" title="返回当前会话" hidden>↩ 当前</button>
         <span class="health-badge" id="healthBadge" title="Context 健康评分">—</span>
         <button id="refreshBtn" class="btn" title="刷新数据">↻ 刷新</button>
       </div>

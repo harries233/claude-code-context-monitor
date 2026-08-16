@@ -1,6 +1,6 @@
 # Claude Code Context Monitor（VS Code 扩展）
 
-> **状态（2026-08-16）**：**v0.2.0 已发布**（Provider 架构 + 健康评分 + Homebrew 双形态）· `main` 与远端同步（HEAD `fcd3135`）· 工作区干净 · 两种安装方式均实测通过 · 下一步：可选上架 VS Code Marketplace
+> **状态（2026-08-16）**：三个 Bug 已修复（侧边栏点击切换详情 · 多窗口当前会话按最近活动跟随 · 悬停提示不再被轮询重建打断）· 23 测试全绿 · 本次未发版，待 `bash scripts/release.sh 0.2.1` · 下一步：可选上架 VS Code Marketplace
 
 监控 Claude Code 的上下文用量。双形态：本扩展 + 终端 CLI（`../claude-context-cli`）。
 
@@ -8,13 +8,13 @@
 
 | 项 | 值 |
 |---|---|
-| 当前版本 | **v0.2.0**（发布完成；Provider 架构 + Context 健康评分 + 17 测试） |
-| 分支 | `main`，与远端同步（HEAD `fcd3135` = formula 类名修复） |
-| 工作区 | 干净 |
-| 发布 | GitHub release `v0.2.0`（vsix 资产）+ tap `harries233/homebrew-context` 同步；`brew install claude-context-monitor` 端到端实测通过 |
+| 当前版本 | **v0.2.0**（已发布；Provider 架构 + Context 健康评分 + 17 测试）· 三个 Bug 修复已完成，待发版 **v0.2.1** |
+| 分支 | `main`，本次修复已提交（未推送，领先 `origin`） |
+| 工作区 | 干净（`dist/` 已 gitignore） |
+| 发布 | 最近一次 `v0.2.0`（vsix 资产 + tap `harries233/homebrew-context` 同步）；本次未发版 |
 | 安装方式 | 方式一 `code --install-extension claude-code-context-monitor-0.2.0.vsix` ✅ · 方式二 `brew install claude-context-monitor` ✅ |
-| 最近修复 | formula 类名 `ClaudeCodeContextMonitor` → `ClaudeContextMonitor`（否则 `brew install` 报「No available formula」） |
-| 下一步 | 可选：`vsce publish` 上架 VS Code Marketplace（需 Azure DevOps PAT） |
+| 最近修复 | ① 侧边栏点击 Session 时详情面板跟随切换对应会话（`openDashboard` 携带 sessionId + Dashboard 选中态）；② 多 Claude 窗口/终端时底部 Claude Context 按「最近活动」判定当前会话（`resolveCurrentSession` 改按 `lastActivityAt`/`lastModifiedAt`，不再锁定最新开启的），并在窗口获焦/切终端时立即刷新；③ 悬停提示改为 diff 式树更新（稳定实例 + 内容变化才刷新），轮询不再重建整棵树、悬停内容保持到鼠标离开 |
+| 下一步 | 可选：`bash scripts/release.sh 0.2.1` 发版；`vsce publish` 上架 Marketplace（需 Azure DevOps PAT） |
 
 ## 1. 数据契约（改动即破坏性）
 

@@ -37,9 +37,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // 命令
   context.subscriptions.push(
-    vscode.commands.registerCommand('claudeContextMonitor.openDashboard', () => {
-      DashboardPanel.createOrShow(context.extensionUri, monitor);
-    }),
+    vscode.commands.registerCommand(
+      'claudeContextMonitor.openDashboard',
+      (sessionId?: string) => {
+        // 侧边栏点击 Session 时带上 sessionId，让详情面板切换到对应会话
+        DashboardPanel.createOrShow(context.extensionUri, monitor, sessionId);
+      }
+    ),
     vscode.commands.registerCommand('claudeContextMonitor.refresh', () => monitor.refresh()),
     vscode.commands.registerCommand('claudeContextMonitor.compactHint', async () => {
       await vscode.env.clipboard.writeText('/compact');
@@ -56,6 +60,16 @@ export function activate(context: vscode.ExtensionContext): void {
       await vscode.env.clipboard.writeText(text);
       void vscode.window.showInformationMessage('已生成 Session 摘要并复制到剪贴板');
     })
+  );
+
+  // 窗口获得焦点 / 切换终端时立即刷新，保证底部状态栏跟随当前正在使用的 Session，而不是等下一轮轮询
+  context.subscriptions.push(
+    vscode.window.onDidChangeWindowState((e) => {
+      if (e.focused) {
+        monitor.refresh();
+      }
+    }),
+    vscode.window.onDidChangeActiveTerminal(() => monitor.refresh())
   );
 
   // 未检测到 Claude Code 时给出一次性提示

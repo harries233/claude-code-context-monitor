@@ -144,7 +144,7 @@
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
-    "test": "tsc -p test/tsconfig.json && node --test \"dist-test/test/*.test.js\"",
+    "test": "tsc -p test/tsconfig.json && node --test dist-test/test/",
     "lint": "echo \"no linter configured\"",
     "release": "bash scripts/release.sh"
   },

@@ -6,6 +6,9 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // 前端状态：当前正在查看的会话 id（undefined = 跟随当前会话）
+  const state = { selectedSessionId: undefined };
+
   // ---------- 格式化工具 ----------
   function fmtTokens(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
@@ -65,22 +68,28 @@
     const cur = snapshot.current;
     const level = snapshot.warningLevel || 'normal';
     const health = snapshot.health;
+    state.selectedSessionId = snapshot.selectedSessionId || undefined;
+    // 真实当前会话用于标记列表里的 ★；选中历史会话时 current 已被替换
+    const realCurrentId = snapshot.realCurrentId || (cur ? cur.meta.sessionId : null);
 
-    renderHeader(cur, health);
+    renderHeader(cur, health, state.selectedSessionId);
     renderHealth(health);
     renderGauge(cur, level);
     renderBanner(level, cur);
     renderContextBar(cur, level);
     renderStats(cur);
-    renderSessions(snapshot.sessions, cur);
+    renderSessions(snapshot.sessions, realCurrentId, state.selectedSessionId);
     renderLargeFiles(cur);
     renderSuggestions(snapshot.suggestionList);
   }
 
-  function renderHeader(cur, health) {
+  function renderHeader(cur, health, selectedSessionId) {
     $('sessionName').textContent = cur
       ? (cur.meta.name || cur.meta.sessionId) + (cur.meta.model ? ' · ' + cur.meta.model : '')
       : '未检测到活动 Session';
+
+    // 查看历史会话时显示「返回当前」按钮
+    $('backCurrentBtn').hidden = !selectedSessionId;
 
     const badge = $('healthBadge');
     if (health) {
@@ -210,20 +219,23 @@
       .join('');
   }
 
-  function renderSessions(sessions, cur) {
+  function renderSessions(sessions, realCurrentId, selectedSessionId) {
     const list = $('sessionList');
     if (!sessions || sessions.length === 0) {
       list.innerHTML = '<div class="empty">暂无 Session 记录。</div>';
       return;
     }
-    const currentId = cur ? cur.meta.sessionId : null;
     list.innerHTML = sessions
       .map(function (s) {
-        const isCurrent = s.meta.sessionId === currentId;
+        const isCurrent = s.meta.sessionId === realCurrentId;
+        const isSelected = s.meta.sessionId === selectedSessionId;
         const pctColor = LEVEL_COLORS[levelOf(s.contextPercent)] || LEVEL_COLORS.normal;
         return (
           '<div class="session-item' +
           (isCurrent ? ' current' : '') +
+          (isSelected ? ' selected' : '') +
+          '" data-id="' +
+          esc(s.meta.sessionId) +
           '">' +
           '<span class="session-dot ' +
           (s.meta.active ? 'active' : 'ended') +
@@ -342,6 +354,23 @@
   $('summaryClose').addEventListener('click', closeSummary);
   $('summaryModal').addEventListener('click', function (e) {
     if (e.target === $('summaryModal')) closeSummary();
+  });
+
+  // 点击 Session 列表项：查看该会话详情；再次点击当前选中的会话则返回当前
+  $('sessionList').addEventListener('click', function (e) {
+    const item = e.target.closest('.session-item');
+    if (!item) return;
+    const id = item.getAttribute('data-id');
+    if (state.selectedSessionId && id === state.selectedSessionId) {
+      vscode.postMessage({ type: 'backToCurrent' });
+    } else {
+      vscode.postMessage({ type: 'selectSession', sessionId: id });
+    }
+  });
+
+  // 查看历史会话时，顶栏「返回当前」按钮
+  $('backCurrentBtn').addEventListener('click', function () {
+    vscode.postMessage({ type: 'backToCurrent' });
   });
 
   // 初始状态：请求一次快照（若已有则靠 update 推送）

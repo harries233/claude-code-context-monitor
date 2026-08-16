@@ -1,38 +1,37 @@
 import { SessionMeta, SessionStats } from '../models/types';
 
 /**
- * 确定「当前」Session：
- *   1. cwd 匹配工作区且 active 的最新 Session
- *   2. 最新的 active Session
+ * 确定「当前」Session（多个 Claude Code 窗口/终端同时活跃时，跟随最近使用的那个）：
+ *   1. cwd 匹配工作区、且最近有活动的 Session
+ *   2. 所有活跃 Session 中最近有活动的
  *   3. 列表中最后修改的 Session
+ *
+ * 按「最近活动时间」而非「创建时间」排序：用户可能一直在旧窗口里工作，
+ * 而新建的窗口是后开的；若按 startedAt 选，状态栏会一直锁定在最新开的会话上。
  */
 export function resolveCurrentSession(
   sessions: SessionStats[],
   active: SessionMeta[],
   cwd: string
 ): SessionStats | null {
-  const activeMatching = active
-    .filter((a) => a.cwd === cwd)
-    .sort((a, b) => b.startedAt - a.startedAt);
-  if (activeMatching.length > 0) {
-    const found = sessions.find((s) => s.meta.sessionId === activeMatching[0].sessionId);
-    if (found) {
-      return found;
-    }
-  }
+  const byId = new Map(sessions.map((s) => [s.meta.sessionId, s]));
 
-  const activeSorted = [...active].sort((a, b) => b.startedAt - a.startedAt);
-  if (activeSorted.length > 0) {
-    const found = sessions.find((s) => s.meta.sessionId === activeSorted[0].sessionId);
-    if (found) {
-      return found;
-    }
-  }
+  /** 最近活动时间：优先 JSONL 最后一条消息的时间，其次文件修改时间，最后创建时间。 */
+  const lastActivity = (s: SessionStats): number =>
+    s.lastActivityAt ?? s.meta.lastModifiedAt ?? s.meta.startedAt ?? 0;
 
-  if (sessions.length > 0) {
-    return [...sessions].sort(
-      (a, b) => (b.meta.lastModifiedAt || 0) - (a.meta.lastModifiedAt || 0)
-    )[0];
-  }
-  return null;
+  /** 从活跃会话列表里挑出最近有活动的一个（前提是其统计已解析出来）。 */
+  const pick = (candidates: SessionMeta[]): SessionStats | null => {
+    const matched = candidates
+      .filter((a) => byId.has(a.sessionId))
+      .sort((a, b) => lastActivity(byId.get(b.sessionId)!) - lastActivity(byId.get(a.sessionId)!));
+    return matched.length > 0 ? byId.get(matched[0].sessionId)! : null;
+  };
+
+  return (
+    pick(active.filter((a) => a.cwd === cwd)) ??
+    pick(active) ??
+    [...sessions].sort((a, b) => lastActivity(b) - lastActivity(a))[0] ??
+    null
+  );
 }
