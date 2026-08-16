@@ -310,6 +310,20 @@
     return 'normal';
   }
 
+  // ---------- 自动更新 ----------
+  function renderUpdateStatus(data) {
+    const btn = $('updateBtn');
+    if (!btn) return;
+    if (data.available && data.version) {
+      btn.textContent = data.installing ? '更新中…' : '⬇ 更新 ' + data.version;
+      btn.hidden = false;
+      btn.disabled = !!data.installing;
+    } else {
+      btn.hidden = true;
+      btn.disabled = false;
+    }
+  }
+
   // ---------- 摘要弹窗 ----------
   function openSummary(text) {
     $('summaryText').textContent = text;
@@ -328,6 +342,8 @@
       render(msg.data);
     } else if (msg.type === 'summary') {
       openSummary(msg.data.text);
+    } else if (msg.type === 'updateStatus') {
+      renderUpdateStatus(msg.data || {});
     }
   });
 
@@ -371,6 +387,14 @@
   // 查看历史会话时，顶栏「返回当前」按钮
   $('backCurrentBtn').addEventListener('click', function () {
     vscode.postMessage({ type: 'backToCurrent' });
+  });
+
+  // 检测到新版本时，点击「更新」触发下载安装
+  $('updateBtn').addEventListener('click', function () {
+    const btn = $('updateBtn');
+    btn.disabled = true;
+    btn.textContent = '更新中…';
+    vscode.postMessage({ type: 'updateNow' });
   });
 
   // 初始状态：请求一次快照（若已有则靠 update 推送）

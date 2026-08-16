@@ -6,7 +6,12 @@ import { computeHealthScore } from '../services/healthScore';
 import { generateSuggestions } from '../services/suggestions';
 import { evaluateWarningLevel } from '../services/warningSystem';
 import { ContextSnapshot } from '../models/types';
+import { fetchLatestRelease, hasUpdate, UpdateInfo } from '../services/updateChecker';
+import { updateTo } from '../services/updater';
 import { getDashboardHtml } from './html';
+
+/** 本次 VS Code 会话里已经提醒过的版本，避免每次打开 Dashboard 都重复弹通知。 */
+let notifiedVersion: string | undefined;
 
 /** 下发给 WebView 的数据：在原快照基础上补充「查看历史会话」的选中状态。 */
 interface DashboardViewData extends ContextSnapshot {
@@ -50,7 +55,10 @@ export class DashboardPanel {
   private readonly panel: vscode.WebviewPanel;
   private readonly monitor: ContextMonitor;
   private readonly disposables: vscode.Disposable[] = [];
+  private readonly currentVersion: string;
   private selectedSessionId: string | undefined;
+  private updateInfo: UpdateInfo | null = null;
+  private updating = false;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -61,6 +69,9 @@ export class DashboardPanel {
     this.panel = panel;
     this.monitor = monitor;
     this.selectedSessionId = sessionId;
+    this.currentVersion =
+      (vscode.extensions.getExtension('harries233.claude-code-context-monitor')?.packageJSON
+        .version as string | undefined) ?? '0.0.0';
     panel.webview.html = getDashboardHtml(panel.webview, extensionUri);
 
     const sendUpdate = (s: ContextSnapshot) => this.post('update', this.toViewData(s));
@@ -68,6 +79,8 @@ export class DashboardPanel {
     this.disposables.push(panel.webview.onDidReceiveMessage((m) => this.onMessage(m)));
 
     this.disposables.push(panel.onDidDispose(() => this.dispose()));
+
+    void this.checkForUpdate();
   }
 
   private onMessage(msg: { type?: string; text?: string; sessionId?: string }): void {
@@ -78,6 +91,8 @@ export class DashboardPanel {
         if (snap) {
           this.post('update', this.toViewData(snap));
         }
+        // 重发更新状态：checkForUpdate 的推送可能早于 webview 监听器注册而丢失
+        this.postUpdateStatus();
         break;
       }
       case 'selectSession': {
@@ -88,8 +103,17 @@ export class DashboardPanel {
         this.setSelectedSession(undefined);
         break;
       }
+      case 'updateNow': {
+        if (this.updateInfo) {
+          void this.runUpdate(this.updateInfo);
+        } else {
+          void this.checkForUpdate();
+        }
+        break;
+      }
       case 'refresh':
         void vscode.commands.executeCommand('claudeContextMonitor.refresh');
+        void this.checkForUpdate();
         break;
       case 'copyCompact':
         void vscode.env.clipboard.writeText('/compact').then(() => {
@@ -157,6 +181,75 @@ export class DashboardPanel {
       realCurrentId,
       selectedSessionId: this.selectedSessionId,
     };
+  }
+
+  /**
+   * 检查 GitHub 最新版本并通知：
+   * - 有新版本 → Dashboard 顶栏显示「更新」按钮 + 弹一次系统通知（每版本仅一次）；
+   * - 无新版本 / 检查失败 → 隐藏按钮。
+   */
+  private async checkForUpdate(): Promise<void> {
+    this.post('updateStatus', { checking: true, version: this.currentVersion });
+    this.updateInfo = await fetchLatestRelease();
+    const info = this.updateInfo;
+    this.postUpdateStatus();
+    if (!info || !hasUpdate(this.currentVersion, info.version) || notifiedVersion === info.version) {
+      return;
+    }
+    notifiedVersion = info.version;
+    const choice = await vscode.window.showInformationMessage(
+      `Claude Context Monitor 发现新版本 v${info.version}，是否立即更新？`,
+      '更新',
+      '稍后'
+    );
+    if (choice === '更新') {
+      void this.runUpdate(info);
+    }
+  }
+
+  /** 按当前已知的更新信息把状态下发给 WebView（隐藏或显示「更新」按钮）。 */
+  private postUpdateStatus(): void {
+    const info = this.updateInfo;
+    if (info && hasUpdate(this.currentVersion, info.version)) {
+      this.post('updateStatus', { available: true, version: info.version, tagName: info.tagName });
+    } else {
+      this.post('updateStatus', { available: false, version: this.currentVersion });
+    }
+  }
+
+  /** 下载并安装最新版，成功后提示重载窗口。 */
+  private async runUpdate(info: UpdateInfo): Promise<void> {
+    if (this.updating) {
+      return;
+    }
+    this.updating = true;
+    this.post('updateStatus', { available: true, version: info.version, installing: true });
+    try {
+      const ok = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `正在下载并安装 Claude Context Monitor v${info.version}…`,
+        },
+        () => updateTo(info)
+      );
+      if (!ok) {
+        throw new Error(
+          '安装失败：VS Code 内置命令不可用且未找到 code 命令，请用 `code --install-extension` 手动安装'
+        );
+      }
+      const choice = await vscode.window.showInformationMessage(
+        '更新已安装，是否立即重载窗口？',
+        '重载'
+      );
+      if (choice === '重载') {
+        void vscode.commands.executeCommand('workbench.action.reloadWindow');
+      }
+    } catch (e) {
+      void vscode.window.showErrorMessage(`更新失败：${(e as Error).message}`);
+      this.post('updateStatus', { available: true, version: info.version });
+    } finally {
+      this.updating = false;
+    }
   }
 
   private post(type: string, data?: unknown): void {

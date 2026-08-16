@@ -87,6 +87,19 @@ body {
 .btn.primary:hover {
   background: var(--vscode-button-hoverBackground);
 }
+.btn.update {
+  background: var(--ccm-accent, #7c5cff);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+}
+.btn.update:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.btn.update:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 /* ---------- 健康徽章 ---------- */
 .health-badge {

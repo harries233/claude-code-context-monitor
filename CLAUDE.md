@@ -1,6 +1,6 @@
 # Claude Code Context Monitor（VS Code 扩展）
 
-> **状态（2026-08-16）**：三个 Bug 已修复（侧边栏点击切换详情 · 多窗口当前会话按最近活动跟随 · 悬停提示不再被轮询重建打断）· 23 测试全绿 · 本次未发版，待 `bash scripts/release.sh 0.2.1` · 下一步：可选上架 VS Code Marketplace
+> **状态（2026-08-16）**：三个 Bug 修复 + **自动更新功能**（Dashboard 内「更新」按钮，检测 GitHub 最新 release 并一键安装）· 27 测试全绿 · 待发版 **v0.2.1**（连 CLI v0.1.1）· 下一步：可选上架 VS Code Marketplace
 
 监控 Claude Code 的上下文用量。双形态：本扩展 + 终端 CLI（`../claude-context-cli`）。
 
@@ -8,13 +8,13 @@
 
 | 项 | 值 |
 |---|---|
-| 当前版本 | **v0.2.0**（已发布；Provider 架构 + Context 健康评分 + 17 测试）· 三个 Bug 修复已完成，待发版 **v0.2.1** |
-| 分支 | `main`，本次修复已提交（未推送，领先 `origin`） |
+| 当前版本 | **v0.2.0**（已发布）· 三个 Bug 修复 + 自动更新已完成，待发版 **v0.2.1** |
+| 分支 | `main`，本次改动已提交（未推送，领先 `origin`） |
 | 工作区 | 干净（`dist/` 已 gitignore） |
-| 发布 | 最近一次 `v0.2.0`（vsix 资产 + tap `harries233/homebrew-context` 同步）；本次未发版 |
+| 发布 | 最近一次 `v0.2.0`（vsix 资产 + tap `harries233/context` 同步）；本次未发版 |
 | 安装方式 | 方式一 `code --install-extension claude-code-context-monitor-0.2.0.vsix` ✅ · 方式二 `brew install claude-context-monitor` ✅ |
-| 最近修复 | ① 侧边栏点击 Session 时详情面板跟随切换对应会话（`openDashboard` 携带 sessionId + Dashboard 选中态）；② 多 Claude 窗口/终端时底部 Claude Context 按「最近活动」判定当前会话（`resolveCurrentSession` 改按 `lastActivityAt`/`lastModifiedAt`，不再锁定最新开启的），并在窗口获焦/切终端时立即刷新；③ 悬停提示改为 diff 式树更新（稳定实例 + 内容变化才刷新），轮询不再重建整棵树、悬停内容保持到鼠标离开 |
-| 下一步 | 可选：`bash scripts/release.sh 0.2.1` 发版；`vsce publish` 上架 Marketplace（需 Azure DevOps PAT） |
+| 最近修复/新增 | ① 侧边栏点击 Session 时详情面板跟随切换对应会话（`openDashboard` 携带 sessionId + Dashboard 选中态）；② 多 Claude 窗口/终端时底部 Claude Context 按「最近活动」判定当前会话（`resolveCurrentSession` 改按 `lastActivityAt`/`lastModifiedAt`），并在窗口获焦/切终端时立即刷新；③ 悬停提示改为 diff 式树更新（稳定实例 + 内容变化才刷新），轮询不再重建整棵树、悬停内容保持到鼠标离开；④ **自动更新**：Dashboard 打开时查 GitHub Releases API（`src/services/updateChecker.ts`），发现新版本在顶栏显示「更新」按钮 + 系统通知，点击后下载 vsix（`src/services/updater.ts`）经 `workbench.extensions.installExtension` 安装并提示重载 |
+| 下一步 | 发版 **v0.2.1**（`bash scripts/release.sh 0.2.1`）+ CLI **v0.1.1**（含 `resolveCurrentSession` 同步）+ 同步 tap；可选 `vsce publish` 上架 Marketplace（需 Azure DevOps PAT） |
 
 ## 1. 数据契约（改动即破坏性）
 
@@ -57,6 +57,7 @@ CLI（`../claude-context-cli/bin/claude-context`）是扩展**解析后端**的�
 - 第三方网关封顶常小于官方容量，1M 表项实际可能只有 128K。
 - `claude`/`code` 未必在 PATH 上（通过 VS Code 扩展启动的 Claude Code 尤其如此）；环境探测以 `~/.claude` 数据目录 + 活跃会话文件为主信号，`claude` 命令只用于「打开新 Session」动作。formula 的 `code_cli` 按标准 app bundle 路径兜底，不依赖 PATH。
 - Homebrew formula 类名必须匹配文件名：`claude-context-monitor.rb` ↔ `ClaudeContextMonitor`。`release.sh` 只替换 version/sha256/url、不碰类名；改类名需同时改源仓库与 tap 两处 Formula 并各自 push。
+- 自动更新：GitHub Releases API 无 token 限流 60 次/时，被限流/离线时 `fetchLatestRelease` 返回 null，按钮静默隐藏（不弹错）；安装优先内置命令 `workbench.extensions.installExtension`（传 vsix 的 `Uri`），失败回退 `code --install-extension`（走 `findCodeBinary`，不依赖 PATH）。检测到新版本的通知每版本每会话只弹一次。
 
 ## 6. 规范
 
