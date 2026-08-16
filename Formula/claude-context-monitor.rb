@@ -10,10 +10,10 @@
 class ClaudeContextMonitor < Formula
   desc "VS Code extension to monitor Claude Code context usage"
   homepage "https://github.com/harries233/claude-code-context-monitor"
-  url "https://github.com/harries233/claude-code-context-monitor/releases/download/v0.2.0/claude-code-context-monitor-0.2.0.vsix"
-  sha256 "3fda8dd3d079419c134a479cf2dba1b44ea7c9a3d84aaddc0639ef4fee059a22" # 由 scripts/release.sh 自动填充
+  url "https://github.com/harries233/claude-code-context-monitor/releases/download/v0.2.1/claude-code-context-monitor-0.2.1.vsix"
+  sha256 "594512dd2dadc15d3d23ac54ce6f915ecbe4cae2b785d4222c16c2b3bd49a26d" # 由 scripts/release.sh 自动填充
   license "MIT"
-  version "0.2.0"
+  version "0.2.1"
 
   # 依赖 VS Code 的 code 命令，但不强制 Homebrew 安装 VS Code（它本身是 cask）。
   # 未找到 code 时只保存 vsix 副本并提示手动安装。

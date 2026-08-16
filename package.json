@@ -2,7 +2,7 @@
   "name": "claude-code-context-monitor",
   "displayName": "Claude Context Monitor",
   "description": "实时监控 Claude Code 的上下文使用情况，提供健康评分、告警与 Session 管理",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "harries233",
   "license": "MIT",
   "repository": {
